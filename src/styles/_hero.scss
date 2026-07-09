@@ -1,0 +1,91 @@
+.hero-section {
+  padding: clamp(3rem, 8vw, 6rem) 0 2rem;
+}
+
+.home-hero {
+  padding: 0;
+}
+
+.home-hero__carousel,
+.home-hero__fallback {
+  overflow: hidden;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.home-hero__image,
+.home-hero__fallback {
+  height: calc(100vh - 84px);
+  min-height: 600px;
+}
+
+.home-hero__image {
+  width: 100%;
+  object-fit: cover;
+  filter: saturate(1.03) brightness(0.58);
+}
+
+.home-hero__image--empty,
+.home-hero__fallback {
+  background:
+    linear-gradient(135deg, rgb(47 51 55 / 90%), rgb(196 0 22 / 76%)),
+    $gray-800;
+}
+
+.home-hero__fallback {
+  display: grid;
+  align-content: center;
+  padding: clamp(2rem, 6vw, 5rem);
+  color: $white;
+}
+
+.home-hero__fallback p {
+  max-width: 38rem;
+}
+
+.home-hero .carousel-caption {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  top: 0;
+  max-width: 100%;
+  text-align: left;
+  transform: none;
+  display: flex;
+  align-items: center;
+}
+
+.home-hero .carousel-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(47 51 55 / 80%), rgb(196 0 22 / 34%), transparent),
+    linear-gradient(0deg, rgb(0 0 0 / 40%), transparent 80%);
+  pointer-events: none;
+}
+
+.home-hero .carousel-caption {
+  z-index: 2;
+}
+
+.home-hero__caption-copy {
+  max-width: 38rem;
+  color: rgb(255 255 255 / 86%);
+  font-size: clamp(1rem, 2vw, 1.15rem);
+}
+
+.home-hero .carousel-caption h1,
+.home-hero__fallback h1 {
+  margin-bottom: 1rem;
+  font-size: clamp(2.25rem, 7vw, 4.75rem);
+  font-weight: 800;
+  line-height: 0.98;
+}
+
+.hero-section__copy {
+  max-width: 42rem;
+  color: $gray-700;
+  font-size: 1.1rem;
+}

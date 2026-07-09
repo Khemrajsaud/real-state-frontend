@@ -1,0 +1,21 @@
+.site-footer {
+  background: #0f172a !important;
+  color: #cbd5e1 !important;
+
+  .text-muted {
+    color: #94a3b8 !important;
+  }
+
+  a.text-muted:hover,
+  .hover-text-primary:hover {
+    color: #c40016 !important;
+    transition: color 0.2s ease-in-out;
+  }
+
+  .social-btn {
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    }
+  }
+}

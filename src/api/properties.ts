@@ -1,12 +1,4 @@
 import axiosInstance from './axiosInstance'
-import {
-  mockCreateProperty,
-  mockDeleteProperty,
-  mockGetProperties,
-  mockGetPropertyById,
-  mockUpdateProperty,
-  USE_MOCK_API,
-} from '../mocks/mockApi'
 
 type ApiCollectionResponse = {
   success?: boolean
@@ -17,9 +9,24 @@ type ApiCollectionResponse = {
   property?: unknown
 }
 
+type ApiMetaResponse = {
+  success?: boolean
+  message?: string
+  error?: string
+  data?: {
+    categories?: Array<{ id?: number; name?: string; iconUrl?: string | null }>
+    statuses?: Array<{ id?: number; name?: string }>
+    amenities?: Array<{ id?: number; name?: string }>
+  }
+}
+
 export type PropertyMedia = {
   id?: string | number
   _id?: string
+  image_url?: string
+  video_url?: string
+  doc_url?: string
+  doc_name?: string
   url?: string
   secure_url?: string
   path?: string
@@ -62,7 +69,25 @@ export type Property = {
   documents?: PropertyMedia[] | string[]
   propertyDocs?: PropertyMedia[] | string[]
   amenities?: Array<PropertyCategory | string>
+  property_amenities?: Array<{
+    id?: string | number
+    amenityId?: string | number
+    amenity?: PropertyCategory | string
+    [key: string]: unknown
+  }>
   [key: string]: unknown
+}
+
+export type PropertyMetaOption = {
+  id: number
+  name: string
+  iconUrl?: string | null
+}
+
+export type PropertyMeta = {
+  categories: PropertyMetaOption[]
+  statuses: PropertyMetaOption[]
+  amenities: PropertyMetaOption[]
 }
 
 export type PropertyFormPayload = {
@@ -73,7 +98,7 @@ export type PropertyFormPayload = {
   categoryId: string
   statusId: string
   locationLink?: string
-  amenityIds?: string
+  amenityIds?: string[] | string
   propertyImages?: FileList
   propertyVideos?: FileList
   propertyDocs?: FileList
@@ -93,30 +118,6 @@ export const getPropertyId = (property: Property) => property._id ?? property.id
 export const getPropertyTitle = (property: Property) =>
   property.title?.trim() || 'Untitled property'
 
-export const getPropertyCategoryName = (property: Property) => {
-  if (!property.category) {
-    return null
-  }
-
-  if (typeof property.category === 'string') {
-    return property.category
-  }
-
-  return property.category.name ?? property.category.title ?? null
-}
-
-export const getPropertyStatusName = (property: Property) => {
-  if (!property.status) {
-    return null
-  }
-
-  if (typeof property.status === 'string') {
-    return property.status
-  }
-
-  return property.status.name ?? property.status.title ?? null
-}
-
 export const getMediaUrl = (media?: PropertyMedia | string) => {
   if (!media) {
     return null
@@ -127,6 +128,9 @@ export const getMediaUrl = (media?: PropertyMedia | string) => {
   }
 
   return (
+    (media.image_url as string) ??
+    (media.video_url as string) ??
+    (media.doc_url as string) ??
     media.url ??
     media.secure_url ??
     media.path ??
@@ -204,21 +208,100 @@ const normalizeProperty = (response: ApiCollectionResponse): Property => {
   throw new Error('Property details were not found.')
 }
 
-export const getProperties = async () => {
-  if (USE_MOCK_API) {
-    return mockGetProperties()
+export const getPropertyCategoryName = (property: Property) => {
+  if (!property.category) {
+    return null
   }
 
+  if (typeof property.category === 'string') {
+    return property.category
+  }
+
+  return property.category.name ?? property.category.title ?? null
+}
+
+export const getPropertyStatusName = (property: Property) => {
+  if (!property.status) {
+    return null
+  }
+
+  if (typeof property.status === 'string') {
+    return property.status
+  }
+
+  return property.status.name ?? property.status.title ?? null
+}
+
+export const getPropertyAmenityNames = (property: Property) => {
+  const relationAmenities = property.property_amenities ?? []
+
+  const fromRelations = relationAmenities
+    .map((relation) => {
+      if (typeof relation.amenity === 'string') {
+        return relation.amenity
+      }
+
+      return relation.amenity?.name ?? relation.amenity?.title ?? null
+    })
+    .filter((amenity): amenity is string => Boolean(amenity))
+
+  if (fromRelations.length > 0) {
+    return fromRelations
+  }
+
+  return (property.amenities ?? [])
+    .map((amenity) => {
+      if (typeof amenity === 'string') {
+        return amenity
+      }
+
+      return amenity.name ?? amenity.title ?? null
+    })
+    .filter((amenity): amenity is string => Boolean(amenity))
+}
+
+const normalizeMetaOptions = (
+  items: Array<{ id?: number; name?: string; iconUrl?: string | null }> = [],
+): PropertyMetaOption[] =>
+  items
+    .filter((item): item is PropertyMetaOption => typeof item.id === 'number' && Boolean(item.name))
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      iconUrl: item.iconUrl ?? null,
+    }))
+
+const normalizePropertyMeta = (response: ApiMetaResponse): PropertyMeta => {
+  if (response.success === false) {
+    throw new Error(response.error ?? response.message ?? 'Unable to load property metadata.')
+  }
+
+  return {
+    categories: normalizeMetaOptions(response.data?.categories),
+    statuses: normalizeMetaOptions(response.data?.statuses),
+    amenities: normalizeMetaOptions(response.data?.amenities),
+  }
+}
+
+export const getPropertyMeta = async () => {
+  const response = await axiosInstance.get<ApiMetaResponse>('/properties/meta')
+
+  return normalizePropertyMeta(response.data)
+}
+
+export const getAdminProperties = async () => {
+  const response = await axiosInstance.get<ApiCollectionResponse>('/properties')
+
+  return normalizeProperties(response.data)
+}
+
+export const getProperties = async () => {
   const response = await axiosInstance.get<ApiCollectionResponse>('/properties')
 
   return normalizeProperties(response.data)
 }
 
 export const getPropertyById = async (propertyId: string) => {
-  if (USE_MOCK_API) {
-    return mockGetPropertyById(propertyId)
-  }
-
   const response = await axiosInstance.get<ApiCollectionResponse>(
     `/properties/${propertyId}`,
   )
@@ -240,7 +323,10 @@ const buildPropertyFormData = (payload: PropertyFormPayload) => {
   }
 
   if (payload.amenityIds) {
-    formData.append('amenityIds', payload.amenityIds)
+    formData.append(
+      'amenityIds',
+      Array.isArray(payload.amenityIds) ? JSON.stringify(payload.amenityIds) : payload.amenityIds,
+    )
   }
 
   Array.from(payload.propertyImages ?? []).forEach((file) => {
@@ -257,10 +343,6 @@ const buildPropertyFormData = (payload: PropertyFormPayload) => {
 }
 
 export const createProperty = async (payload: PropertyFormPayload) => {
-  if (USE_MOCK_API) {
-    return mockCreateProperty(payload)
-  }
-
   const response = await axiosInstance.post<ApiCollectionResponse>(
     '/properties',
     buildPropertyFormData(payload),
@@ -273,10 +355,6 @@ export const updateProperty = async (
   propertyId: string | number,
   payload: PropertyFormPayload,
 ) => {
-  if (USE_MOCK_API) {
-    return mockUpdateProperty(propertyId, payload)
-  }
-
   const response = await axiosInstance.put<ApiCollectionResponse>(
     `/properties/${propertyId}`,
     buildPropertyFormData(payload),
@@ -286,10 +364,6 @@ export const updateProperty = async (
 }
 
 export const deleteProperty = async (propertyId: string | number) => {
-  if (USE_MOCK_API) {
-    return mockDeleteProperty(propertyId)
-  }
-
   const response = await axiosInstance.delete<ApiCollectionResponse>(
     `/properties/${propertyId}`,
   )

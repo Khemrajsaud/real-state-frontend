@@ -1,10 +1,15 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Button, Col, Container, Row } from 'react-bootstrap'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Alert, Button, Col, Container, Form, Row, Spinner } from 'react-bootstrap'
 import { Link, useParams } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { submitInquiryRequest, type InquiryPayload } from '../../api/auth'
 import {
   formatNprPrice,
   getPropertyById,
+  getPropertyAmenityNames,
+  getPropertyCategoryName,
+  getPropertyStatusName,
 } from '../../api/properties'
 import { ErrorState } from '../../components/common/ErrorState'
 import { Loader } from '../../components/common/Loader'
@@ -21,13 +26,19 @@ import {
   translateAmenity,
 } from '../../utils/translateHelpers'
 
-type TabType = 'about' | 'features' | 'location'
+type TabType = 'about' | 'features' | 'location' | 'inquiry'
 
 export function PropertyDetail() {
   const { propertyId } = useParams()
   const { language } = useLanguage()
   const isNp = language === 'np'
   const [activeTab, setActiveTab] = useState<TabType>('about')
+  const { register: regInquiry, handleSubmit: handleInquiry, reset: resetInquiry, formState: { errors: inquiryErrors } } = useForm<InquiryPayload>()
+
+  const inquiryMutation = useMutation({
+    mutationFn: submitInquiryRequest,
+    onSuccess: () => resetInquiry(),
+  })
 
   const {
     data: property,
@@ -68,18 +79,18 @@ export function PropertyDetail() {
   }
 
   const categoryName = translateCategory(
-    typeof property.category === 'object' ? property.category?._id : String(property.category ?? ''),
+    getPropertyCategoryName(property) ?? '',
     language
   )
   const statusName = translateStatus(
-    typeof property.status === 'object' ? property.status?._id : String(property.status ?? ''),
+    getPropertyStatusName(property) ?? '',
     language
   )
 
   const title = translatePropertyTitle(property.title ?? '', language)
   const description = translatePropertyDesc(property.description ?? '', language)
   const address = translateAddress(property.address, language)
-  const amenities = property.amenities ?? []
+  const amenities = getPropertyAmenityNames(property)
 
   // Feature variables
   const area = (property.area as string) || ''
@@ -165,6 +176,13 @@ export function PropertyDetail() {
               {isNp ? 'नक्सा' : 'MAP'}
             </button>
           ) : null}
+          <button
+            type="button"
+            className={`pd-tabs__btn ${activeTab === 'inquiry' ? 'pd-tabs__btn--active' : ''}`}
+            onClick={() => setActiveTab('inquiry')}
+          >
+            {isNp ? 'सोधपुछ' : 'INQUIRY'}
+          </button>
         </div>
 
         {/* 2 Column Content Layout */}
@@ -185,14 +203,12 @@ export function PropertyDetail() {
                   {amenities.length > 0 ? (
                     <div className="pd-amenities-grid">
                       {amenities.map((amenity) => {
-                        const name = typeof amenity === 'string' ? amenity : amenity.name ?? amenity.title ?? ''
-                        const label = translateAmenity(name, language)
                         return (
-                          <div key={name} className="pd-amenity-pill">
+                          <div key={amenity} className="pd-amenity-pill">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" className="me-2 text-success">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
-                            <span>{label}</span>
+                            <span>{translateAmenity(amenity, language)}</span>
                           </div>
                         )
                       })}
@@ -200,6 +216,75 @@ export function PropertyDetail() {
                   ) : (
                     <p className="text-muted">{isNp ? 'सुविधाहरू उल्लेख गरिएको छैन।' : 'No amenities listed.'}</p>
                   )}
+                </div>
+              )}
+
+              {activeTab === 'inquiry' && (
+                <div className="pd-section animate-fade-in">
+                  <h2 className="pd-section__title mb-1">{isNp ? 'सोधपुछ पठाउनुहोस्' : 'Send an Inquiry'}</h2>
+                  <p className="text-muted small mb-4">{isNp ? 'तपाईंको जानकारी भर्नुहोस्, हामी छिट्टै सम्पर्क गर्नेछौं।' : 'Fill in your details and we will get back to you shortly.'}</p>
+
+                  {inquiryMutation.isSuccess && (
+                    <Alert variant="success" className="mb-3">
+                      {isNp ? '✅ तपाईंको सोधपुछ सफलतापूर्वक पठाइयो!' : '✅ Your inquiry was submitted successfully!'}
+                    </Alert>
+                  )}
+                  {inquiryMutation.isError && (
+                    <Alert variant="danger" className="mb-3">
+                      {isNp ? 'सोधपुछ पठाउन असफल भयो। पुनः प्रयास गर्नुहोस्।' : 'Failed to submit. Please try again.'}
+                    </Alert>
+                  )}
+
+                  <Form onSubmit={handleInquiry((data) => inquiryMutation.mutate({
+                    ...data,
+                    message: `[${property.title ?? 'Property'}] ${data.message}`,
+                  }))}>
+                    <Row className="g-3">
+                      <Col md={6}>
+                        <Form.Label className="fw-medium">{isNp ? 'पूरा नाम' : 'Full Name'} <span className="text-danger">*</span></Form.Label>
+                        <Form.Control
+                          placeholder={isNp ? 'तपाईंको नाम' : 'Your full name'}
+                          isInvalid={!!inquiryErrors.name}
+                          {...regInquiry('name', { required: true })}
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Label className="fw-medium">{isNp ? 'फोन नम्बर' : 'Phone Number'} <span className="text-danger">*</span></Form.Label>
+                        <Form.Control
+                          placeholder={isNp ? 'तपाईंको फोन' : 'Your phone number'}
+                          isInvalid={!!inquiryErrors.phone}
+                          {...regInquiry('phone', { required: true })}
+                        />
+                      </Col>
+                      <Col md={12}>
+                        <Form.Label className="fw-medium">{isNp ? 'इमेल' : 'Email'} <span className="text-danger">*</span></Form.Label>
+                        <Form.Control
+                          type="email"
+                          placeholder={isNp ? 'तपाईंको इमेल' : 'Your email address'}
+                          isInvalid={!!inquiryErrors.email}
+                          {...regInquiry('email', { required: true })}
+                        />
+                      </Col>
+                      <Col md={12}>
+                        <Form.Label className="fw-medium">{isNp ? 'सन्देश' : 'Message'} <span className="text-danger">*</span></Form.Label>
+                        <Form.Control
+                          as="textarea"
+                          rows={4}
+                          placeholder={isNp ? 'यस सम्पत्तिबारे तपाईंको प्रश्न वा चासो लेख्नुहोस्...' : 'Write your question or interest about this property...'}
+                          isInvalid={!!inquiryErrors.message}
+                          {...regInquiry('message', { required: true })}
+                        />
+                      </Col>
+                      <Col md={12}>
+                        <Button type="submit" className="w-100 py-2" disabled={inquiryMutation.isPending}>
+                          {inquiryMutation.isPending
+                            ? <><Spinner size="sm" className="me-2" />{isNp ? 'पठाउँदैछ...' : 'Submitting...'}</>
+                            : (isNp ? 'सोधपुछ पठाउनुहोस्' : 'Submit Inquiry')
+                          }
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Form>
                 </div>
               )}
 

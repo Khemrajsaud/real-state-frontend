@@ -108,3 +108,124 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+
+// ── User Avatar & Dropdown ──────────────────────────────
+.nav-avatar-wrapper {
+  position: relative;
+}
+
+.nav-avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem 0.3rem 0.3rem;
+  border: 1.5px solid rgb(47 51 55 / 12%);
+  border-radius: 999px;
+  background: $white;
+  box-shadow: 0 2px 8px rgb(47 51 55 / 8%);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgb(47 51 55 / 14%);
+  }
+}
+
+.nav-avatar-img {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.nav-avatar-initials {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: $primary;
+  color: $white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-avatar-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #2f3337;
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-avatar-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 200px;
+  background: $white;
+  border: 1px solid rgb(47 51 55 / 10%);
+  border-radius: 1rem;
+  box-shadow: 0 16px 40px rgb(47 51 55 / 14%);
+  z-index: 100;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.nav-avatar-dropdown__header {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgb(47 51 55 / 8%);
+  background: #f8fafc;
+}
+
+.nav-avatar-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2f3337;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #f1f5f9;
+    color: $primary;
+  }
+
+  svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+}
+
+.nav-avatar-dropdown__item--danger {
+  color: #dc3545;
+
+  &:hover {
+    background: #fff5f5;
+    color: #dc3545;
+  }
+}
+
+.nav-avatar-dropdown__divider {
+  height: 1px;
+  background: rgb(47 51 55 / 8%);
+  margin: 0.25rem 0;
+}

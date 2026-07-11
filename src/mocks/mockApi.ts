@@ -15,7 +15,7 @@ import type { SubscribePayload } from '../api/subscribers'
 import type { Testimonial, TestimonialFormPayload } from '../api/testimonials'
 import { companyInfo } from '../constants/companyInfo'
 
-export const USE_MOCK_API = true
+export const USE_MOCK_API = false
 
 type MockState = {
   properties: Property[]
@@ -486,11 +486,13 @@ const getPropertyFromForm = (payload: PropertyFormPayload, property?: Property):
   category: { _id: payload.categoryId, name: payload.categoryId || 'Property' },
   status: { _id: payload.statusId, name: payload.statusId || 'Available' },
   amenities: payload.amenityIds
-    ? payload.amenityIds
-        .replace(/[[\]"]/g, '')
-        .split(',')
-        .map((amenity) => amenity.trim())
-        .filter(Boolean)
+    ? (Array.isArray(payload.amenityIds)
+        ? payload.amenityIds
+        : payload.amenityIds
+            .replace(/[[\]"]/g, '')
+            .split(',')
+            .map((amenity) => amenity.trim())
+            .filter(Boolean))
     : property?.amenities ?? ['Road access'],
   propertyImages:
     property?.propertyImages && property.propertyImages.length > 0

@@ -8,6 +8,13 @@ export const translateCategory = (categoryId: string | undefined, lang: 'np' | '
     'cat-flats': { np: 'फ्ल्याट', en: 'Flats' },
     'cat-office': { np: 'कार्यालय', en: 'Office' },
     'cat-shop': { np: 'पसल', en: 'Shop' },
+    house: { np: 'घर', en: 'House' },
+    apartment: { np: 'अपार्टमेन्ट', en: 'Apartment' },
+    land: { np: 'जग्गा', en: 'Land' },
+    commercial: { np: 'व्यावसायिक', en: 'Commercial' },
+    flats: { np: 'फ्ल्याट', en: 'Flats' },
+    'office space': { np: 'कार्यालय', en: 'Office Space' },
+    'shop space': { np: 'पसल', en: 'Shop Space' },
   }
   const id = categoryId?.toLowerCase() || ''
   return map[id]?.[lang] || categoryId
@@ -20,6 +27,11 @@ export const translateStatus = (statusId: string | undefined, lang: 'np' | 'en')
     'status-available': { np: 'उपलब्ध', en: 'Available' },
     'status-construction': { np: 'निर्माणाधीन', en: 'Under Construction' },
     'status-sold': { np: 'बिक्री भएको', en: 'Sold' },
+    'for sale': { np: 'बिक्रीका लागि', en: 'For Sale' },
+    'for rent': { np: 'भाडाका लागि', en: 'For Rent' },
+    available: { np: 'उपलब्ध', en: 'Available' },
+    'under construction': { np: 'निर्माणाधीन', en: 'Under Construction' },
+    sold: { np: 'बिक्री भएको', en: 'Sold' },
   }
   const id = statusId?.toLowerCase() || ''
   return map[id]?.[lang] || statusId

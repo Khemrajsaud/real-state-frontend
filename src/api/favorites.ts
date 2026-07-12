@@ -1,6 +1,5 @@
 import axiosInstance from './axiosInstance'
 import type { Property } from './properties'
-import { mockGetFavorites, mockToggleFavorite, USE_MOCK_API } from '../mocks/mockApi'
 
 type ApiResponse = {
   success?: boolean
@@ -55,10 +54,6 @@ export const getFavoriteProperty = (favorite: Favorite): Property | null => {
 }
 
 export const getFavorites = async (userId: string | number) => {
-  if (USE_MOCK_API) {
-    return mockGetFavorites(userId)
-  }
-
   const response = await axiosInstance.get<ApiResponse>(`/favorites/${userId}`)
 
   return normalizeFavorites(response.data)
@@ -71,10 +66,6 @@ export const toggleFavorite = async ({
   userId: string | number
   propertyId: string | number
 }) => {
-  if (USE_MOCK_API) {
-    return mockToggleFavorite({ userId, propertyId })
-  }
-
   const response = await axiosInstance.post<ApiResponse>('/favorites/', {
     userId,
     propertyId,

@@ -114,12 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         const response = await signupRequest(payload)
-        return applyAuthSession(response.token, response.user)
+        return response.user
       } finally {
         setIsLoading(false)
       }
     },
-    [applyAuthSession],
+    [],
   )
 
   const logout = useCallback(async () => {

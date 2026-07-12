@@ -1,9 +1,11 @@
 import { useRef, useState, useEffect } from 'react'
 import { Container, Nav, Navbar as BootstrapNavbar } from 'react-bootstrap'
 import { Link, NavLink } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { companyDisplayName, companyInfo } from '../../constants/companyInfo'
 import { useAuth } from '../../hooks/useAuth'
 import { useLanguage } from '../../context/LanguageContext'
+import { getFavorites } from '../../api/favorites'
 
 export function Navbar() {
   const { isAuthenticated, logout, user } = useAuth()
@@ -14,6 +16,14 @@ export function Navbar() {
   const avatarUrl = user?.avatar as string | undefined
   const userName = user?.name as string | undefined
   const initials = userName ? userName.charAt(0).toUpperCase() : 'U'
+
+  const userId = user?._id ?? user?.id
+  const favoritesQuery = useQuery({
+    queryKey: ['favorites', userId],
+    queryFn: () => getFavorites(userId ?? ''),
+    enabled: Boolean(isAuthenticated && userId),
+  })
+  const favoritesCount = favoritesQuery.data?.length ?? 0
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -45,6 +55,34 @@ export function Navbar() {
           </Nav>
 
           <Nav className="site-nav-actions align-items-center">
+            {isAuthenticated && (
+              <Link
+                to="/favorites"
+                className="nav-favorites-btn"
+                title={t('navFavorites')}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="nav-favorites-icon"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
+                {favoritesCount > 0 && (
+                  <span className="nav-favorites-badge">
+                    {favoritesCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
             {isAuthenticated ? (
               <div className="nav-avatar-wrapper" ref={dropdownRef}>
                 <button
@@ -63,19 +101,13 @@ export function Navbar() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-
+ 
                 {dropdownOpen && (
                   <div className="nav-avatar-dropdown">
                     <div className="nav-avatar-dropdown__header">
                       <div className="fw-semibold">{userName}</div>
                       <div className="text-muted small">{user?.email as string}</div>
                     </div>
-                    <Link to="/favorites" className="nav-avatar-dropdown__item" onClick={() => setDropdownOpen(false)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      {t('navFavorites')}
-                    </Link>
                     <Link to="/profile" className="nav-avatar-dropdown__item" onClick={() => setDropdownOpen(false)}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -91,7 +123,7 @@ export function Navbar() {
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
-                      Logout
+                      Logout / लगआउट
                     </button>
                   </div>
                 )}

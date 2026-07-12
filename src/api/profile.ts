@@ -58,10 +58,13 @@ export const updateProfileText = async (
     return mockUpdateProfileText(userId, payload)
   }
 
-  const response = await axiosInstance.put<ApiResponse>(
-    `/profile/${userId}/text`,
-    payload,
-  )
+  const body: ProfileTextPayload = {
+    name: payload.name,
+    phone: payload.phone,
+    ...(payload.dob ? { dob: payload.dob } : {}),
+  }
+
+  const response = await axiosInstance.put<ApiResponse>(`/profile/${userId}/text`, body)
 
   return normalizeProfile(response.data)
 }

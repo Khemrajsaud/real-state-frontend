@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { getFavorites, getFavoriteProperty, toggleFavorite } from '../../api/favorites'
 import { getPropertyId, type Property } from '../../api/properties'
 import { useAuth } from '../../hooks/useAuth'
@@ -14,6 +14,7 @@ interface FavoriteButtonProps {
 
 export function FavoriteButton({ property, minimal = false }: FavoriteButtonProps) {
   const { user, isAuthenticated } = useAuth()
+  const location = useLocation()
   const userId = getUserId(user)
   const propertyId = getPropertyId(property)
   const queryClient = useQueryClient()
@@ -52,7 +53,7 @@ export function FavoriteButton({ property, minimal = false }: FavoriteButtonProp
   if (minimal) {
     if (!isAuthenticated) {
       return (
-        <Link to="/login" className="btn-favorite btn-favorite--minimal" aria-label="Sign in to save">
+        <Link to="/login" state={{ from: location }} className="btn-favorite btn-favorite--minimal" aria-label="Sign in to save">
           {heartIcon}
         </Link>
       )
@@ -73,7 +74,7 @@ export function FavoriteButton({ property, minimal = false }: FavoriteButtonProp
 
   if (!isAuthenticated) {
     return (
-      <Link to="/login" className="btn btn-outline-primary">
+      <Link to="/login" state={{ from: location }} className="btn btn-outline-primary">
         Sign in to save
       </Link>
     )

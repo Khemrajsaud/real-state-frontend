@@ -7,10 +7,13 @@ import { EmptyState } from '../../components/common/EmptyState'
 import { ErrorState } from '../../components/common/ErrorState'
 import { Loader } from '../../components/common/Loader'
 import { useAuth } from '../../hooks/useAuth'
+import { useLanguage } from '../../context/LanguageContext'
 
 const isProperty = (p: Property | null): p is Property => Boolean(p)
 
 function FavoriteCard({ property, userId }: { property: Property; userId: string | number }) {
+  const { t, language } = useLanguage()
+  const isNp = language === 'np'
   const queryClient = useQueryClient()
   const propertyId = getPropertyId(property)
   const images = getPropertyImages(property)
@@ -30,12 +33,10 @@ function FavoriteCard({ property, userId }: { property: Property; userId: string
           <img src={coverImage} alt={property.title as string} className="w-100" style={{ height: '200px', objectFit: 'cover' }} />
         ) : (
           <div className="bg-light d-flex align-items-center justify-content-center text-muted" style={{ height: '200px' }}>
-            No image
+            {isNp ? 'तस्वीर छैन' : 'No image'}
           </div>
         )}
-        {status && (
-          <span className="position-absolute top-0 end-0 m-2 badge bg-success">{status}</span>
-        )}
+        {status && <span className="position-absolute top-0 end-0 m-2 badge bg-success">{status}</span>}
       </div>
       <Card.Body className="p-3 d-flex flex-column">
         {category && <span className="text-primary small fw-semibold mb-1">{category}</span>}
@@ -45,17 +46,17 @@ function FavoriteCard({ property, userId }: { property: Property; userId: string
           </Link>
         </h6>
         <p className="text-muted small mb-2">📍 {property.address as string}</p>
-        <div className="fw-bold text-primary mb-3">{formatShortPrice(property.price)}</div>
+        <div className="fw-bold text-primary mb-3">{formatShortPrice(property.price, isNp)}</div>
         <div className="mt-auto d-flex gap-2">
           <Link to={`/properties/${propertyId}`} className="btn btn-sm btn-primary flex-grow-1">
-            View Details
+            {t('favViewDetails')}
           </Link>
           <Button
             size="sm"
             variant="outline-danger"
             disabled={removeMutation.isPending}
             onClick={() => removeMutation.mutate()}
-            title="Remove from favorites"
+            title={isNp ? 'मनपर्नेबाट हटाउनुहोस्' : 'Remove from favorites'}
           >
             {removeMutation.isPending ? (
               <span className="spinner-border spinner-border-sm" />
@@ -73,7 +74,8 @@ function FavoriteCard({ property, userId }: { property: Property; userId: string
 
 export function Favorites() {
   const { user, isAuthenticated } = useAuth()
-  const userId = user?._id ?? user?.id
+  const { t } = useLanguage()
+  const userId = user?.id ?? user?._id
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: { pathname: '/favorites' } }} />
@@ -90,27 +92,24 @@ export function Favorites() {
   return (
     <main>
       <Container className="py-5">
-        <p className="eyebrow text-primary">मेरो सूची</p>
-        <h1 className="display-6 fw-bold mb-1">मनपर्ने सम्पत्तिहरू</h1>
+        <p className="eyebrow text-primary">{t('favEyebrow')}</p>
+        <h1 className="display-6 fw-bold mb-1">{t('favTitle')}</h1>
         <p className="text-muted mb-4">
-          तपाईंले सेभ गर्नुभएका सम्पत्तिहरू यहाँ देखिन्छन्।
+          {t('favSubtitle')}
           {favoriteProperties.length > 0 && (
-            <span className="ms-2 badge bg-primary">{favoriteProperties.length} सम्पत्ति</span>
+            <span className="ms-2 badge bg-primary">{favoriteProperties.length} {t('favProperties')}</span>
           )}
         </p>
 
-        {isLoading && <Loader label="मनपर्ने सम्पत्तिहरू लोड हुँदैछ..." />}
+        {isLoading && <Loader label={t('favLoading')} />}
         {isError && (
           <ErrorState
-            title="मनपर्ने सम्पत्तिहरू लोड गर्न सकिएन"
+            title={t('favError')}
             message={error instanceof Error ? error.message : undefined}
           />
         )}
         {!isLoading && !isError && favoriteProperties.length === 0 && (
-          <EmptyState
-            title="अहिलेसम्म कुनै सम्पत्ति सेभ गर्नुभएको छैन"
-            message="सम्पत्तिहरू हेर्नुहोस् र मनपर्ने सम्पत्तिमा ❤️ थिच्नुहोस्।"
-          />
+          <EmptyState title={t('favEmpty')} message={t('favEmptyMsg')} />
         )}
         {!isLoading && !isError && favoriteProperties.length > 0 && (
           <Row xs={1} md={2} lg={3} className="g-4">

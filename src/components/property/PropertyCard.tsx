@@ -5,6 +5,9 @@ import {
   getMediaUrl,
   getPropertyId,
   getPropertyImages,
+  getPropertyAmenityNames,
+  getPropertyCategoryName,
+  getPropertyStatusName,
   type Property,
 } from '../../api/properties'
 import { FavoriteButton } from './FavoriteButton'
@@ -23,17 +26,11 @@ export function PropertyCard({ property }: { property: Property }) {
   const propertyId = getPropertyId(property)
   const images = getPropertyImages(property)
   const coverImage = getMediaUrl(images[0])
-  
-  const categoryName = translateCategory(
-    typeof property.category === 'object' ? property.category?._id : String(property.category ?? ''),
-    language
-  )
-  const statusName = translateStatus(
-    typeof property.status === 'object' ? property.status?._id : String(property.status ?? ''),
-    language
-  )
+
+  const categoryName = translateCategory(getPropertyCategoryName(property) ?? '', language)
+  const statusName = translateStatus(getPropertyStatusName(property) ?? '', language)
   const statusId = typeof property.status === 'object' && property.status !== null
-    ? property.status._id ?? ''
+    ? String(property.status._id ?? property.status.id ?? '')
     : String(property.status ?? '')
   
   const title = translatePropertyTitle(property.title ?? '', language)
@@ -152,15 +149,10 @@ export function PropertyCard({ property }: { property: Property }) {
             </div>
           ) : null}
 
-          {!area && !roadSize && property.amenities && property.amenities.length > 0 ? (
+          {!area && !roadSize && getPropertyAmenityNames(property).length > 0 ? (
             <div className="property-card__feature-item d-flex align-items-center gap-1">
               <span className="badge bg-light text-secondary">
-                {translateAmenity(
-                  typeof property.amenities[0] === 'string'
-                    ? property.amenities[0]
-                    : property.amenities[0].name ?? property.amenities[0].title ?? '',
-                  language
-                )}
+                {translateAmenity(getPropertyAmenityNames(property)[0], language)}
               </span>
             </div>
           ) : null}

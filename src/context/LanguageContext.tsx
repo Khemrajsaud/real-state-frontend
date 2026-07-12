@@ -11,11 +11,18 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguage] = useState<Language>('np');
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('siteLanguage')
+    return (saved === 'en' || saved === 'np') ? saved : 'np'
+  })
 
   const toggleLanguage = () => {
-    setLanguage((prev) => (prev === 'np' ? 'en' : 'np'));
-  };
+    setLanguage((prev) => {
+      const next = prev === 'np' ? 'en' : 'np'
+      localStorage.setItem('siteLanguage', next)
+      return next
+    })
+  }
 
   const t = (key: TranslationKey) => {
     return translations[language][key] || translations['np'][key] || key;

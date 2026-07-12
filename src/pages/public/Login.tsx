@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import type { LoginPayload } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
+import { useLanguage } from '../../context/LanguageContext'
 
 type LocationState = { from?: { pathname?: string } }
 
@@ -21,18 +22,14 @@ const EyeIcon = ({ open }: { open: boolean }) =>
 
 export function Login() {
   const { login, isLoading } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const state = location.state as LocationState | null
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<LoginPayload>()
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<LoginPayload>()
 
   const onSubmit = async (payload: LoginPayload) => {
     setError(null)
@@ -40,7 +37,7 @@ export function Login() {
       await login(payload)
       navigate(state?.from?.pathname ?? '/properties', { replace: true })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'लगइन असफल भयो।')
+      setError(e instanceof Error ? e.message : t('loginFailed'))
     }
   }
 
@@ -48,9 +45,9 @@ export function Login() {
     <Container className="auth-page py-5">
       <Card className="auth-card mx-auto border-0 shadow-sm">
         <Card.Body className="p-4 p-md-5">
-          <p className="eyebrow text-primary">स्वागत छ</p>
-          <h1 className="h2 fw-bold">लगइन</h1>
-          <p className="text-muted mb-4">मनपर्ने सम्पत्तिहरू हेर्न लगइन गर्नुहोस्।</p>
+          <p className="eyebrow text-primary">{t('loginWelcome')}</p>
+          <h1 className="h2 fw-bold">{t('loginTitle')}</h1>
+          <p className="text-muted mb-4">{t('loginSubtitle')}</p>
 
           {error && (
             <Alert variant="danger" dismissible onClose={() => setError(null)}>
@@ -59,11 +56,9 @@ export function Login() {
           )}
 
           <Form onSubmit={handleSubmit(onSubmit)} noValidate>
-
-            {/* Email */}
             <Form.Group className="mb-3" controlId="login-email">
               <Form.Label className="fw-medium">
-                इमेल <span className="text-danger">*</span>
+                {t('loginEmail')} <span className="text-danger">*</span>
               </Form.Label>
               <Form.Control
                 type="email"
@@ -72,37 +67,30 @@ export function Login() {
                 isInvalid={Boolean(errors.email)}
                 isValid={Boolean(!errors.email && watch('email'))}
                 {...register('email', {
-                  required: 'इमेल आवश्यक छ।',
-                  pattern: {
-                    value: /^\S+@\S+\.\S+$/,
-                    message: 'मान्य इमेल ठेगाना राख्नुहोस्।',
-                  },
+                  required: t('loginEmail') + ' required.',
+                  pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter a valid email.' },
                 })}
               />
               <Form.Control.Feedback type="invalid">{errors.email?.message}</Form.Control.Feedback>
             </Form.Group>
 
-            {/* Password with show/hide */}
             <Form.Group className="mb-1" controlId="login-password">
               <div className="d-flex justify-content-between align-items-center mb-1">
                 <Form.Label className="fw-medium mb-0">
-                  पासवर्ड <span className="text-danger">*</span>
+                  {t('loginPassword')} <span className="text-danger">*</span>
                 </Form.Label>
                 <Link to="/forgot-password" className="text-muted" style={{ fontSize: '0.82rem' }}>
-                  पासवर्ड बिर्सनुभयो?
+                  {t('loginForgot')}
                 </Link>
               </div>
               <InputGroup>
                 <Form.Control
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  placeholder="तपाईंको पासवर्ड"
+                  placeholder="••••••"
                   isInvalid={Boolean(errors.password)}
                   isValid={Boolean(!errors.password && watch('password'))}
-                  {...register('password', {
-                    required: 'पासवर्ड आवश्यक छ।',
-                    minLength: { value: 1, message: 'पासवर्ड आवश्यक छ।' },
-                  })}
+                  {...register('password', { required: true })}
                 />
                 <Button
                   variant="outline-secondary"
@@ -110,7 +98,6 @@ export function Login() {
                   onClick={() => setShowPassword((v) => !v)}
                   tabIndex={-1}
                   style={{ borderLeft: 'none', zIndex: 0 }}
-                  title={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <EyeIcon open={showPassword} />
                 </Button>
@@ -120,13 +107,13 @@ export function Login() {
 
             <Button type="submit" disabled={isLoading} className="w-100 py-2 mt-4">
               {isLoading
-                ? <><span className="spinner-border spinner-border-sm me-2" />लगइन हुँदैछ...</>
-                : 'लगइन गर्नुहोस्'}
+                ? <><span className="spinner-border spinner-border-sm me-2" />{t('loginLoading')}</>
+                : t('loginBtn')}
             </Button>
           </Form>
 
           <p className="mt-4 mb-0 text-center">
-            नयाँ प्रयोगकर्ता? <Link to="/signup">खाता बनाउनुहोस्</Link>
+            {t('loginNoAccount')} <Link to="/signup">{t('loginSignupLink')}</Link>
           </p>
         </Card.Body>
       </Card>

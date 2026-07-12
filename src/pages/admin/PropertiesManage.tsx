@@ -91,7 +91,7 @@ export function PropertiesManage() {
     queryFn: getAdminProperties,
   })
 
-  const { register, handleSubmit, reset, watch } = useForm<PropertyFormPayload>({
+  const { register, handleSubmit, reset, watch, setValue } = useForm<PropertyFormPayload>({
     defaultValues: emptyPropertyForm,
   })
 
@@ -108,35 +108,37 @@ export function PropertiesManage() {
   }, [watchedImages])
 
   useEffect(() => {
+    if (!meta) return
     setImagePreviewUrls([])
     if (!editingProperty) {
       reset({
         ...emptyPropertyForm,
-        categoryId: String(meta?.categories?.[0]?.id ?? ''),
-        statusId: String(meta?.statuses?.[0]?.id ?? ''),
+        categoryId: String(meta.categories[0]?.id ?? ''),
+        statusId: String(meta.statuses[0]?.id ?? ''),
         amenityIds: [],
       })
       return
     }
+    const catId =
+      typeof editingProperty.category === 'object'
+        ? String(editingProperty.category._id ?? editingProperty.category.id ?? '')
+        : String(meta.categories[0]?.id ?? '')
+    const statId =
+      typeof editingProperty.status === 'object'
+        ? String(editingProperty.status._id ?? editingProperty.status.id ?? '')
+        : String(meta.statuses[0]?.id ?? '')
     reset({
       ...emptyPropertyForm,
       title: editingProperty.title ?? '',
       description: editingProperty.description ?? '',
       price: String(editingProperty.price ?? ''),
       address: editingProperty.address ?? '',
-      categoryId:
-        typeof editingProperty.category === 'object'
-          ? String(editingProperty.category._id ?? editingProperty.category.id ?? '')
-          : String(meta?.categories?.[0]?.id ?? ''),
-      statusId:
-        typeof editingProperty.status === 'object'
-          ? String(editingProperty.status._id ?? editingProperty.status.id ?? '')
-          : String(meta?.statuses?.[0]?.id ?? ''),
+      categoryId: catId,
+      statusId: statId,
       locationLink: editingProperty.locationLink ?? '',
       amenityIds: getPropertyAmenityIds(editingProperty),
     })
   }, [editingProperty, meta, reset])
-
   const saveMutation = useMutation({
     mutationFn: (payload: PropertyFormPayload) => {
       const propertyId = editingProperty ? getPropertyId(editingProperty) : null
@@ -235,8 +237,11 @@ export function PropertiesManage() {
               {/* Category */}
               <Col md={4}>
                 <Form.Label className="fw-medium">Category <span className="text-danger">*</span></Form.Label>
-                <Form.Select {...register('categoryId', { required: true })} disabled={isMetaLoading}>
-                  <option value="">{isMetaLoading ? 'Loading...' : 'Select category'}</option>
+                <Form.Select
+                  disabled={isMetaLoading}
+                  value={watch('categoryId')}
+                  onChange={(e) => setValue('categoryId', e.target.value)}
+                >
                   {meta?.categories.map((c) => (
                     <option key={c.id} value={String(c.id)}>{c.name}</option>
                   ))}
@@ -246,8 +251,11 @@ export function PropertiesManage() {
               {/* Status */}
               <Col md={4}>
                 <Form.Label className="fw-medium">Status <span className="text-danger">*</span></Form.Label>
-                <Form.Select {...register('statusId', { required: true })} disabled={isMetaLoading}>
-                  <option value="">{isMetaLoading ? 'Loading...' : 'Select status'}</option>
+                <Form.Select
+                  disabled={isMetaLoading}
+                  value={watch('statusId')}
+                  onChange={(e) => setValue('statusId', e.target.value)}
+                >
                   {meta?.statuses.map((s) => (
                     <option key={s.id} value={String(s.id)}>{s.name}</option>
                   ))}

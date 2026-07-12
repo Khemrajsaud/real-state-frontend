@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import type { SignupPayload } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
+import { useLanguage } from '../../context/LanguageContext'
 
 const EyeIcon = ({ open }: { open: boolean }) =>
   open ? (
@@ -19,20 +20,15 @@ const EyeIcon = ({ open }: { open: boolean }) =>
 
 export function Signup() {
   const { signup, isLoading } = useAuth()
+  const { t, language } = useLanguage()
+  const isNp = language === 'np'
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<SignupPayload>()
-
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<SignupPayload>()
   const passwordValue = watch('password', '')
 
-  // Password strength checker
   const strength = {
     length: passwordValue.length >= 6,
     upper: /[A-Z]/.test(passwordValue),
@@ -40,7 +36,9 @@ export function Signup() {
     number: /[0-9]/.test(passwordValue),
   }
   const strengthScore = Object.values(strength).filter(Boolean).length
-  const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong'][strengthScore]
+  const strengthLabels = isNp
+    ? ['', 'कमजोर', 'ठीकै', 'राम्रो', 'बलियो']
+    : ['', 'Weak', 'Fair', 'Good', 'Strong']
   const strengthColor = ['', '#ef4444', '#f97316', '#eab308', '#22c55e'][strengthScore]
 
   const onSubmit = async (payload: SignupPayload) => {
@@ -57,37 +55,34 @@ export function Signup() {
     <Container className="auth-page py-5">
       <Card className="auth-card mx-auto border-0 shadow-sm">
         <Card.Body className="p-4 p-md-5">
-          <p className="eyebrow text-primary">खाता बनाउनुहोस्</p>
-          <h1 className="h2 fw-bold">Sign Up</h1>
-          <p className="text-muted mb-4">मनपर्ने सम्पत्तिहरू सेभ गर्न खाता बनाउनुहोस्।</p>
+          <p className="eyebrow text-primary">{t('signupEyebrow')}</p>
+          <h1 className="h2 fw-bold">{t('signupTitle')}</h1>
+          <p className="text-muted mb-4">{t('signupSubtitle')}</p>
 
           {error && <Alert variant="danger" dismissible onClose={() => setError(null)}>{error}</Alert>}
 
           <Form onSubmit={handleSubmit(onSubmit)} noValidate>
-
-            {/* Name */}
             <Form.Group className="mb-3" controlId="signup-name">
               <Form.Label className="fw-medium">
-                पूरा नाम <span className="text-danger">*</span>
+                {t('signupName')} <span className="text-danger">*</span>
               </Form.Label>
               <Form.Control
                 autoComplete="name"
-                placeholder="तपाईंको पूरा नाम"
+                placeholder={isNp ? 'तपाईंको पूरा नाम' : 'Your full name'}
                 isInvalid={Boolean(errors.name)}
                 isValid={Boolean(!errors.name && watch('name'))}
                 {...register('name', {
-                  required: 'नाम आवश्यक छ।',
-                  minLength: { value: 2, message: 'नाम कम्तिमा २ अक्षर हुनुपर्छ।' },
-                  maxLength: { value: 60, message: 'नाम ६० अक्षरभन्दा बढी हुन सक्दैन।' },
+                  required: isNp ? 'नाम आवश्यक छ।' : 'Name is required.',
+                  minLength: { value: 2, message: isNp ? 'नाम कम्तिमा २ अक्षर हुनुपर्छ।' : 'Name must be at least 2 characters.' },
+                  maxLength: { value: 60, message: isNp ? 'नाम ६० अक्षरभन्दा बढी हुन सक्दैन।' : 'Name too long.' },
                 })}
               />
               <Form.Control.Feedback type="invalid">{errors.name?.message}</Form.Control.Feedback>
             </Form.Group>
 
-            {/* Email */}
             <Form.Group className="mb-3" controlId="signup-email">
               <Form.Label className="fw-medium">
-                इमेल <span className="text-danger">*</span>
+                {t('signupEmail')} <span className="text-danger">*</span>
               </Form.Label>
               <Form.Control
                 type="email"
@@ -96,20 +91,16 @@ export function Signup() {
                 isInvalid={Boolean(errors.email)}
                 isValid={Boolean(!errors.email && watch('email'))}
                 {...register('email', {
-                  required: 'इमेल आवश्यक छ।',
-                  pattern: {
-                    value: /^\S+@\S+\.\S+$/,
-                    message: 'मान्य इमेल ठेगाना राख्नुहोस्।',
-                  },
+                  required: isNp ? 'इमेल आवश्यक छ।' : 'Email is required.',
+                  pattern: { value: /^\S+@\S+\.\S+$/, message: isNp ? 'मान्य इमेल राख्नुहोस्।' : 'Enter a valid email.' },
                 })}
               />
               <Form.Control.Feedback type="invalid">{errors.email?.message}</Form.Control.Feedback>
             </Form.Group>
 
-            {/* Phone */}
             <Form.Group className="mb-3" controlId="signup-phone">
               <Form.Label className="fw-medium">
-                फोन नम्बर <span className="text-danger">*</span>
+                {t('signupPhone')} <span className="text-danger">*</span>
               </Form.Label>
               <Form.Control
                 autoComplete="tel"
@@ -117,35 +108,31 @@ export function Signup() {
                 isInvalid={Boolean(errors.phone)}
                 isValid={Boolean(!errors.phone && watch('phone'))}
                 {...register('phone', {
-                  required: 'फोन नम्बर आवश्यक छ।',
-                  minLength: { value: 10, message: 'फोन नम्बर कम्तिमा १० अंक हुनुपर्छ।' },
-                  maxLength: { value: 15, message: 'फोन नम्बर धेरै लामो छ।' },
-                  pattern: {
-                    value: /^[\+]?[0-9]{10,15}$/,
-                    message: 'मान्य फोन नम्बर राख्नुहोस् (जस्तै: 9848123456)।',
-                  },
+                  required: isNp ? 'फोन नम्बर आवश्यक छ।' : 'Phone is required.',
+                  minLength: { value: 10, message: isNp ? 'फोन नम्बर कम्तिमा १० अंक हुनुपर्छ।' : 'Phone must be at least 10 digits.' },
+                  maxLength: { value: 15, message: isNp ? 'फोन नम्बर धेरै लामो छ।' : 'Phone too long.' },
+                  pattern: { value: /^[\+]?[0-9]{10,15}$/, message: isNp ? 'मान्य फोन नम्बर राख्नुहोस्।' : 'Enter a valid phone number.' },
                 })}
               />
               <Form.Control.Feedback type="invalid">{errors.phone?.message}</Form.Control.Feedback>
-              <Form.Text className="text-muted">नेपाली मोबाइल नम्बर: 98XXXXXXXX</Form.Text>
+              <Form.Text className="text-muted">{isNp ? 'नेपाली मोबाइल नम्बर: 98XXXXXXXX' : 'e.g. 9848123456'}</Form.Text>
             </Form.Group>
 
-            {/* Password with show/hide */}
             <Form.Group className="mb-2" controlId="signup-password">
               <Form.Label className="fw-medium">
-                पासवर्ड <span className="text-danger">*</span>
+                {t('signupPassword')} <span className="text-danger">*</span>
               </Form.Label>
               <InputGroup>
                 <Form.Control
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  placeholder="कम्तिमा ६ अक्षर"
+                  placeholder={isNp ? 'कम्तिमा ६ अक्षर' : 'At least 6 characters'}
                   isInvalid={Boolean(errors.password)}
                   isValid={Boolean(!errors.password && passwordValue.length >= 6)}
                   {...register('password', {
-                    required: 'पासवर्ड आवश्यक छ।',
-                    minLength: { value: 6, message: 'पासवर्ड कम्तिमा ६ अक्षर हुनुपर्छ।' },
-                    maxLength: { value: 32, message: 'पासवर्ड ३२ अक्षरभन्दा बढी हुन सक्दैन।' },
+                    required: isNp ? 'पासवर्ड आवश्यक छ।' : 'Password is required.',
+                    minLength: { value: 6, message: isNp ? 'पासवर्ड कम्तिमा ६ अक्षर हुनुपर्छ।' : 'Password must be at least 6 characters.' },
+                    maxLength: { value: 32, message: isNp ? 'पासवर्ड ३२ अक्षरभन्दा बढी हुन सक्दैन।' : 'Password too long.' },
                   })}
                 />
                 <Button
@@ -154,7 +141,6 @@ export function Signup() {
                   onClick={() => setShowPassword((v) => !v)}
                   tabIndex={-1}
                   style={{ borderLeft: 'none', zIndex: 0 }}
-                  title={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <EyeIcon open={showPassword} />
                 </Button>
@@ -162,7 +148,6 @@ export function Signup() {
               </InputGroup>
             </Form.Group>
 
-            {/* Password strength bar */}
             {passwordValue.length > 0 && (
               <div className="mb-3">
                 <div className="d-flex gap-1 mb-1">
@@ -170,9 +155,7 @@ export function Signup() {
                     <div
                       key={i}
                       style={{
-                        height: '4px',
-                        flex: 1,
-                        borderRadius: '2px',
+                        height: '4px', flex: 1, borderRadius: '2px',
                         background: i <= strengthScore ? strengthColor : '#e2e8f0',
                         transition: 'background 0.3s',
                       }}
@@ -182,7 +165,7 @@ export function Signup() {
                 <div className="d-flex justify-content-between">
                   <div className="d-flex gap-3 flex-wrap">
                     <small style={{ color: strength.length ? '#22c55e' : '#94a3b8' }}>
-                      {strength.length ? '✓' : '○'} ६+ अक्षर
+                      {strength.length ? '✓' : '○'} {isNp ? '६+ अक्षर' : '6+ chars'}
                     </small>
                     <small style={{ color: strength.upper ? '#22c55e' : '#94a3b8' }}>
                       {strength.upper ? '✓' : '○'} A-Z
@@ -194,8 +177,8 @@ export function Signup() {
                       {strength.number ? '✓' : '○'} 0-9
                     </small>
                   </div>
-                  {strengthLabel && (
-                    <small style={{ color: strengthColor, fontWeight: 600 }}>{strengthLabel}</small>
+                  {strengthLabels[strengthScore] && (
+                    <small style={{ color: strengthColor, fontWeight: 600 }}>{strengthLabels[strengthScore]}</small>
                   )}
                 </div>
               </div>
@@ -203,13 +186,13 @@ export function Signup() {
 
             <Button type="submit" disabled={isLoading} className="w-100 py-2 mt-1">
               {isLoading
-                ? <><span className="spinner-border spinner-border-sm me-2" />खाता बनाउँदैछ...</>
-                : 'खाता बनाउनुहोस्'}
+                ? <><span className="spinner-border spinner-border-sm me-2" />{t('signupLoading')}</>
+                : t('signupBtn')}
             </Button>
           </Form>
 
           <p className="mt-4 mb-0 text-center">
-            पहिले नै खाता छ? <Link to="/login">लगइन गर्नुहोस्</Link>
+            {t('signupHasAccount')} <Link to="/login">{t('signupLoginLink')}</Link>
           </p>
         </Card.Body>
       </Card>

@@ -82,7 +82,7 @@ export function Home() {
                   <Carousel.Caption>
                     <Container>
                       <p className="eyebrow">{isNp ? companyInfo.nameNp : companyInfo.nameEn}</p>
-                      <h1>{isNp ? (banner.title ?? 'सुरक्षित लगानी, सही सम्पत्ति छनोट।') : companyInfo.taglineEn}</h1>
+                      <h1>{isNp ? companyInfo.taglineNp : companyInfo.taglineEn}</h1>
                       <Link to="/properties" className="btn btn-primary btn-lg">
                         {t('heroBtn')}
                       </Link>
@@ -96,7 +96,7 @@ export function Home() {
           <div className="home-hero__fallback rounded-0 border-0 shadow-none">
             <Container>
               <p className="eyebrow text-primary">{isNp ? companyInfo.nameNp : companyInfo.nameEn}</p>
-              <h1>{isNp ? 'सुरक्षित लगानी, सही सम्पत्ति छनोट।' : 'Secure Investment, Right Property Choice.'}</h1>
+              <h1>{isNp ? companyInfo.taglineNp : companyInfo.taglineEn}</h1>
               <p>{isNp ? companyInfo.shortIntroNp : 'Trusted real estate service for buying, selling, and plotting properties in Kailali, Nepal.'}</p>
               <Link to="/properties" className="btn btn-primary btn-lg">
                 {t('heroBtn')}

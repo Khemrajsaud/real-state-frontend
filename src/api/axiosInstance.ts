@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-export const API_BASE_URL = 'https://real-state-backend-system.onrender.com/api'
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? 'https://real-state-backend-system.onrender.com/api'
 export const AUTH_TOKEN_STORAGE_KEY = 'realStateAuthToken'
 
 const axiosInstance = axios.create({
